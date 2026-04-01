@@ -22,33 +22,37 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Coolify supports two deployment methods:
+      # Coolify auto-deploy: if your app has "Auto Deploy" enabled in the
+      # Coolify UI, every push to main will trigger a deploy automatically.
+      # No extra steps needed.
 
-      # -------------------------------------------
-      # Option A: Git webhook (recommended)
-      # -------------------------------------------
-      # In Coolify UI: Application → Git → Enable auto-deploy
-      # Coolify watches your repo and pulls on every push.
-      # This step just triggers the webhook:
-      - name: Trigger Coolify Deploy (webhook)
-        if: ${{ secrets.COOLIFY_DEPLOY_WEBHOOK_URL != '' }}
-        run: |
-          curl -s -X POST "${{ secrets.COOLIFY_DEPLOY_WEBHOOK_URL }}" \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}" \
-            --fail-with-body
-
-      # -------------------------------------------
-      # Option B: Coolify API deploy
-      # -------------------------------------------
-      # Set these secrets in GitHub:
-      #   COOLIFY_API_URL    — e.g. https://coolify.yourdomain.com/api/v1
+      # Manual trigger via Coolify API (if auto-deploy is not enabled):
+      # Required secrets:
+      #   COOLIFY_API_URL    — e.g. https://coolify.firmoncloud.com
       #   COOLIFY_API_TOKEN  — API token from Coolify UI
-      #   COOLIFY_APP_ID     — Application ID from Coolify
+      #   COOLIFY_APP_UUID   — Application UUID from Coolify
       - name: Deploy via Coolify API
-        if: ${{ secrets.COOLIFY_API_TOKEN != '' && secrets.COOLIFY_APP_ID != '' }}
+        if: ${{ secrets.COOLIFY_API_TOKEN != '' && secrets.COOLIFY_APP_UUID != '' }}
         run: |
-          curl -s -X POST "${{ secrets.COOLIFY_API_URL }}/applications/${{ secrets.COOLIFY_APP_ID }}/deploy" \
-            -H "Content-Type: application/json" \
+          echo "Triggering Coolify deploy for ${{ secrets.COOLIFY_APP_UUID }}..."
+          RESPONSE=$(curl -s -X POST \
+            "${{ secrets.COOLIFY_API_URL }}/api/v1/deploy?uuid=${{ secrets.COOLIFY_APP_UUID }}" \
             -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}" \
-            --fail-with-body
+            -H "Content-Type: application/json" \
+            --fail-with-body)
+          
+          echo "$RESPONSE" | python3 -m json.tool
+          
+          # Extract deployment UUID
+          DEPLOY_UUID=$(echo "$RESPONSE" | python3 -c "
+          import sys, json
+          data = json.load(sys.stdin)
+          deployments = data.get('deployments', [])
+          if deployments:
+              print(deployments[0].get('deployment_uuid', 'unknown'))
+          else:
+              print('unknown')
+          ")
+          
+          echo "✅ Deployment queued: $DEPLOY_UUID"
+          echo "Deployment UUID=$DEPLOY_UUID" >> $GITHUB_OUTPUT
