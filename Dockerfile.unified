@@ -1,0 +1,79 @@
+# Unified Dockerfile for all services
+# This image contains: Next.js Frontend, Fastify API, and Python Agentic Worker
+
+FROM node:20-alpine AS base
+
+# Install Python and system dependencies
+RUN apk add --no-cache \
+    python3 \
+    py3-pip \
+    gcc \
+    g++ \
+    make \
+    cargo \
+    rust \
+    python3-dev \
+    musl-dev \
+    linux-headers \
+    supervisor \
+    cairo-dev \
+    jpeg-dev \
+    pango-dev \
+    giflib-dev \
+    pixman-dev \
+    pangomm-dev \
+    libjpeg-turbo-dev \
+    freetype-dev
+
+WORKDIR /app
+
+# ============================================
+# Install Node.js dependencies for all projects
+# ============================================
+
+# Frontend dependencies
+COPY frontend/package*.json /app/frontend/
+WORKDIR /app/frontend
+RUN npm ci
+
+# Fastify API dependencies
+COPY fastify-api/package*.json /app/fastify-api/
+WORKDIR /app/fastify-api
+RUN npm install
+
+# ============================================
+# Install Python dependencies
+# ============================================
+WORKDIR /app/agentic
+COPY agentic/requirements.txt /app/agentic/
+RUN pip3 install --no-cache-dir -r requirements.txt --break-system-packages
+
+# ============================================
+# Copy source code for all projects
+# ============================================
+
+# Frontend source
+WORKDIR /app/frontend
+COPY frontend/ /app/frontend/
+RUN npm run build
+
+# Fastify API source
+WORKDIR /app/fastify-api
+COPY fastify-api/ /app/fastify-api/
+
+# Agentic source
+WORKDIR /app/agentic
+COPY agentic/ /app/agentic/
+
+# ============================================
+# Setup supervisord
+# ============================================
+COPY supervisord.conf /etc/supervisord.conf
+
+WORKDIR /app
+
+# Expose all necessary ports
+EXPOSE 3000 3001
+
+# Start supervisord to manage all processes
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]

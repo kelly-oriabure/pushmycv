@@ -1,0 +1,90 @@
+version: '3.8'
+
+services:
+  # Next.js Frontend
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_FASTIFY_API_URL=http://localhost:3001
+      - NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_KEY}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev
+    depends_on:
+      - api
+    networks:
+      - pushmycv
+
+  # Fastify API
+  api:
+    build:
+      context: ./fastify-api
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=development
+      - SUPABASE_URL=${FASTIFY_SUPABASE_URL}
+      - SUPABASE_KEY=${FASTIFY_SUPABASE_KEY}
+      - JOBEAZY_SUPABASE_URL=${SUPABASE_URL}
+      - JOBEAZY_SUPABASE_KEY=${SUPABASE_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - API_KEY=${API_KEY}
+    volumes:
+      - ./fastify-api:/app
+      - /app/node_modules
+    command: npm run dev
+    networks:
+      - pushmycv
+
+  # Queue Worker (Fastify)
+  worker:
+    build:
+      context: ./fastify-api
+      dockerfile: Dockerfile.dev
+    environment:
+      - NODE_ENV=development
+      - SUPABASE_URL=${FASTIFY_SUPABASE_URL}
+      - SUPABASE_KEY=${FASTIFY_SUPABASE_KEY}
+      - JOBEAZY_SUPABASE_URL=${SUPABASE_URL}
+      - JOBEAZY_SUPABASE_KEY=${SUPABASE_KEY}
+    volumes:
+      - ./fastify-api:/app
+      - /app/node_modules
+    command: npm run worker
+    depends_on:
+      - api
+    networks:
+      - pushmycv
+
+  # Python Agentic Worker
+  agentic:
+    build:
+      context: ./agentic
+      dockerfile: Dockerfile
+    environment:
+      - PYTHONPATH=/app/src
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - FASTIFY_SUPABASE_URL=${FASTIFY_SUPABASE_URL}
+      - FASTIFY_SUPABASE_KEY=${FASTIFY_SUPABASE_KEY}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+    volumes:
+      - ./agentic:/app
+    command: python -m agentic.workers.queue_worker
+    depends_on:
+      - api
+    networks:
+      - pushmycv
+
+networks:
+  pushmycv:
+    driver: bridge

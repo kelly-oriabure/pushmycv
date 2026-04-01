@@ -1,0 +1,6 @@
+name,description,is_premium,category_id
+Classic Professional,"A timeless professional template",false,f0323392-95a8-4136-9b5a-aeaadfc8049d
+Modern Minimal,"Clean and minimal design",false,178e5416-ef46-473f-9bd3-4b7bbc0b380f
+Creative Portfolio,"Perfect for creative professionals",true,178e5416-ef46-473f-9bd3-4b7bbc0b380f
+Academic Standard,"Traditional academic format",false,122427d5-4bf3-41d6-aabe-4df8002e8cde
+Tech Focus,"Optimized for technical roles",false,c69ba74f-8667-4bb5-a440-3312375da4d2

@@ -1,0 +1,23 @@
+# Agentic WAT Framework Dependencies
+
+# Core
+pydantic>=2.0.0
+python-dotenv>=1.0.0
+
+# LLM Providers
+openai>=1.0.0
+anthropic>=0.8.0
+
+# Database
+supabase>=2.0.0
+
+# Optional: Vector storage for long-term memory
+chromadb>=0.4.0
+
+# Testing
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+
+# Development
+black>=23.0.0
+mypy>=1.0.0

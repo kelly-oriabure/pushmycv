@@ -1,0 +1,9 @@
+name,description,is_premium,category_id
+Artisan,"A creative, modern template.",false,178e5416-ef46-473f-9bd3-4b7bbc0b380f
+Cascade,"A clean, professional template.",false,f0323392-95a8-4136-9b5a-aeaadfc8049d
+Cool,"A stylish, tech-focused template.",false,c69ba74f-8667-4bb5-a440-3312375da4d2
+Executive,"A template for executives and professionals.",true,f0323392-95a8-4136-9b5a-aeaadfc8049d
+Milan,"A European-inspired, elegant template.",false,178e5416-ef46-473f-9bd3-4b7bbc0b380f
+Modernist,"A modern, minimalist template.",false,178e5416-ef46-473f-9bd3-4b7bbc0b380f
+Simple White,"A simple, white, classic template.",false,122427d5-4bf3-41d6-aabe-4df8002e8cde
+Simple White,"A simple, white, classic template.",false,122427d5-4bf3-41d6-aabe-4df8002e8cde

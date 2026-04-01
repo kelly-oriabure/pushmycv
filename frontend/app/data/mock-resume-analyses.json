@@ -1,0 +1,53 @@
+[
+  {
+    "analysisId": "6ce38e96-ce69-44ef-bfec-86aea02b70c3",
+    "ats": {
+      "ats_score": 35,
+      "ats_type": "good",
+      "ats_tips_tip": "Fix parsing issues and add ATS keywords.",
+      "ats_explanation": "The resume text contains many concatenated words (e.g., Experiencedbackenddeveloperwith3yearsof...) and inconsistent section headings which will break most ATS parsers. Use plain text with clear headings (Summary, Skills, Experience, Projects, Education). Add relevant keywords for the roles you want (e.g., Node.js, Express, Docker, Kubernetes, AWS/GCP, SQL, NoSQL, CI/CD, unit testing) and list them in a Skills section. Avoid images, tables, and unusual characters; use standard fonts and simple bullets."
+    },
+    "tonestyle": {
+      "tonestyle_score": "60",
+      "tonestyle_tips_tip": "Use active achievement-focused language and consistent punctuation.",
+      "tonestyle_tips_type": "good",
+      "tonestyle_explanation": "Current language is functional but generic and partially unreadable due to missing spacing. Convert responsibilities into achievement statements that start with strong action verbs (Built, Reduced, Improved, Implemented). Quantify impact where possible (e.g., reduced enrollment time by X%, supported Y users, handled Z requests/sec). Maintain consistent punctuation and capitalization to improve professional tone."
+    },
+    "content": {
+      "content_score": 55,
+      "content_tips_tip": "Add metrics, clarify scope, and remove ambiguity.",
+      "content_type": "good",
+      "content_explanation": "Work entries list tasks but no measurable outcomes or scale. For each role include: team size, system scale (traffic, users, transactions), key technologies used, specific contributions, and measurable results. Example: \"Built RESTful enrollment API used by 10k users, reducing sign-up time by 40%\". Clarify the unusually short Lopsim dates or note if contract/consulting. Expand on cloud deployment details (which provider, services), testing, CI/CD, and monitoring used."
+    },
+    "structure": {
+      "structure_score": 40,
+      "structure_tips_tip": "Reformat into a clean, conventional layout.",
+      "structure_tips_type": "good",
+      "structure_explanation": "The resume is currently a single-line block with no clear separation between sections. Use a standard structure: Header (name, location, phone, email, LinkedIn, GitHub), Summary (2–3 lines), Skills (bulleted or comma-separated), Professional Experience (company, role, dates, bullets), Projects (title, 1-line description, tech stack, link), Education (institution, degree, dates). Use consistent date formats (e.g., Jun 2023 – Sep 2024) and order entries reverse-chronologically. Keep margins and readable font for PDF/Word."
+    },
+    "skills": {
+      "skills_type": "good",
+      "skills_tips_tip": "Make the skills section specific and contextual.",
+      "skills_score": 65,
+      "skills_explanation": "You list strong backend frameworks and languages (JavaScript, PHP, Python; Laravel, Django, FastAPI) and broader skills (Git, CloudDeployment, REST API, AI Integrations). Improve by: separating languages, frameworks, databases, cloud/tools, and methodologies; adding versions and concrete tools (e.g., Node.js/Express, Docker, PostgreSQL, Redis, AWS Lambda, EC2, RDS, GitHub Actions, Terraform). Prioritize skills matching target jobs and include competency level (Proficient, Familiar)."
+    },
+    "email": {
+      "email_score": 90,
+      "email_tips_tip": "Email is professional; ensure LinkedIn/GitHub URLs are full and clickable.",
+      "email_tips_type": "good",
+      "email_explanation": "The email (ezekudep@gmail.com) is professional. Improve contact block by providing full URLs for LinkedIn and GitHub ( `https://linkedin.com/in/princewilldev,`  `https://github.com/username).`  Consider adding a portfolio link or personal site and a GitHub repo list for relevant projects. Include country/region and relocate willingness if relevant."
+    },
+    "length": {
+      "length_score": 75,
+      "length_tips_type": "good",
+      "length_tips_tip": "One page is fine; expand with quantified achievements.",
+      "length_explanation": "Brevity is good for an early-career developer, but the resume currently lacks depth due to missing detail and formatting issues. Keep it to one page if possible, but add 1–2 concrete bullets per job with metrics and technologies. If you have more relevant experience or technical projects, a two-page resume is acceptable — only if content is valuable and targeted."
+    },
+    "brevity": {
+      "brevity_score": 50,
+      "brevity_tips_tip": "Be concise but descriptive — fix run-on concatenation.",
+      "brevity_tips_type": "good",
+      "brevity_tips_explanation": "The resume is overly terse in places and jammed together (no spaces). That harms readability far more than length. Use concise bullets (1–2 lines each) focusing on impact and technology. Remove filler and avoid repeating obvious items. Each bullet should answer: what you did, how you did it (tech/tools), and the result/impact."
+    }
+  }
+]

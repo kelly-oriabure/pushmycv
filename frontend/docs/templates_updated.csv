@@ -1,0 +1,9 @@
+uuid,name,description,is_premium,category_id
+1d6ede71-3930-4c35-992a-1abf04c1754e,Artisan,"A creative, modern template.",false,178e5416-ef46-473f-9bd3-4b7bbc0b380f
+0178e367-31e2-4d01-a88b-ecdca6d7bda1,Cascade,"A clean, professional template.",false,f0323392-95a8-4136-9b5a-aeaadfc8049d
+f8e9bd05-7c00-48b5-80b6-12be8c9da219,Cool,"A stylish, tech-focused template.",false,c69ba74f-8667-4bb5-a440-3312375da4d2
+4386291b-c33c-4b1e-9c95-b7acd29b5c7a,Executive,"A template for executives and professionals.",true,f0323392-95a8-4136-9b5a-aeaadfc8049d
+86e7c16b-99d9-4bd0-93f2-d42e3c827580,Milan,"A European-inspired, elegant template.",false,178e5416-ef46-473f-9bd3-4b7bbc0b380f
+f4885f34-4c8a-48c6-a74b-6598921998a1,Modernist,"A modern, minimalist template.",false,178e5416-ef46-473f-9bd3-4b7bbc0b380f
+6cdf186b-8931-4921-89b4-1990a47d4b27,Simple White,"A simple, white, classic template.",false,122427d5-4bf3-41d6-aabe-4df8002e8cde
+9fa8d2fa-7904-4644-ba06-a564ca1d241a,Simple White,"A simple, white, classic template.",false,122427d5-4bf3-41d6-aabe-4df8002e8cde

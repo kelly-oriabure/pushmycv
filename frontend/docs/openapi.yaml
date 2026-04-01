@@ -1,0 +1,497 @@
+openapi: 3.0.3
+info:
+  title: JobEazy API
+  version: 0.1.0
+  description: Initial OpenAPI spec for versioned resume upload APIs.
+servers:
+  - url: http://localhost:3000
+    description: Local dev (default)
+  - url: https://pushmycv.com
+    description: Production
+security:
+  - bearerAuth: []
+paths:
+  /api/v1/auth/login:
+    post:
+      summary: Authenticate user with email and password
+      description: Authenticates a user with Supabase and returns JWT tokens for API access.
+      operationId: loginUser
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/auth/signup:
+    post:
+      summary: Register a new user account
+      description: Creates a new user account with Supabase and returns JWT tokens if auto-confirmed.
+      operationId: signupUser
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupRequest'
+      responses:
+        '200':
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Validation or registration error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/resume-score/upload:
+    post:
+      summary: Upload resume preview image and optional original PDF
+      description: |
+        Uploads a preview image (png/jpg) and optional original PDF. Performs text extraction, duplicate detection, and creates/updates a resume_uploads record.
+      operationId: uploadResume
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Preview image file (png/jpg)
+                originalPdf:
+                  type: string
+                  format: binary
+                  description: Original resume PDF
+              required: [file]
+      responses:
+        '200':
+          description: Upload accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResumeUploadSuccess'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Unauthorized
+        '429':
+          description: Rate limited
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/resumes:
+    post:
+      summary: Upload resume preview image and optional original PDF
+      description: Uploads an image (png/jpg) and optional PDF, performs extraction and duplicate detection, stores in resume_uploads, and triggers analysis.
+      operationId: v1UploadResumes
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                originalPdf:
+                  type: string
+                  format: binary
+                jobTitle:
+                  type: string
+              required: [file]
+      responses:
+        '200':
+          description: Upload accepted
+          headers:
+            RateLimit-Limit:
+              schema: { type: integer }
+            RateLimit-Remaining:
+              schema: { type: integer }
+            RateLimit-Reset:
+              schema: { type: integer, description: seconds epoch }
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResumeUploadSuccess'
+        '400': { description: Validation error }
+        '401': { description: Unauthorized }
+        '429':
+          description: Rate limited
+          headers:
+            RateLimit-Limit:
+              schema: { type: integer }
+            RateLimit-Remaining:
+              schema: { type: integer }
+            RateLimit-Reset:
+              schema: { type: integer }
+            Retry-After:
+              schema: { type: integer }
+        '500': { description: Server error }
+  /api/v1/analyses:
+    post:
+      summary: Trigger resume analysis for an existing upload
+      description: Validates ownership of the upload and invokes the Edge Function to start analysis. Supports idempotency via Idempotency-Key header.
+      operationId: v1CreateAnalysis
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+          description: A unique key to make this request idempotent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                resumeUploadId:
+                  type: string
+                jobTitle:
+                  type: string
+              required: [resumeUploadId]
+      responses:
+        '200':
+          description: Analysis triggered
+          headers:
+            RateLimit-Limit:
+              schema: { type: integer }
+            RateLimit-Remaining:
+              schema: { type: integer }
+            RateLimit-Reset:
+              schema: { type: integer }
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  analysisId: { type: string }
+                  resumeUploadId: { type: string, nullable: true }
+                  message: { type: string }
+        '400': { description: Bad request or missing Idempotency-Key }
+        '401': { description: Unauthorized }
+        '404': { description: Upload not found }
+        '429':
+          description: Rate limited
+          headers:
+            RateLimit-Limit:
+              schema: { type: integer }
+            RateLimit-Remaining:
+              schema: { type: integer }
+            RateLimit-Reset:
+              schema: { type: integer }
+            Retry-After:
+              schema: { type: integer }
+        '500': { description: Server error }
+  /api/v1/analyses/{id}:
+    get:
+      summary: Get combined upload and analysis data by upload ID
+      operationId: v1GetAnalysis
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Success
+          headers:
+            RateLimit-Limit:
+              schema: { type: integer }
+            RateLimit-Remaining:
+              schema: { type: integer }
+            RateLimit-Reset:
+              schema: { type: integer }
+        '401': { description: Unauthorized }
+        '404': { description: Not found }
+        '429': { description: Rate limited }
+        '500': { description: Server error }
+  /api/v1/analyses/{id}/status:
+    get:
+      summary: Get analysis status by analysis ID or upload ID
+      operationId: v1GetAnalysisStatus
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Success
+          headers:
+            RateLimit-Limit:
+              schema: { type: integer }
+            RateLimit-Remaining:
+              schema: { type: integer }
+            RateLimit-Reset:
+              schema: { type: integer }
+        '401': { description: Unauthorized }
+        '404': { description: Not found }
+        '429': { description: Rate limited }
+        '500': { description: Server error }
+  /api/v1/analyses/upload:
+    post:
+      summary: Upload original resume PDF for analysis
+      description: Uploads a PDF, performs extraction and duplicate detection, and creates/updates a record.
+      operationId: uploadAnalyses
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Original resume PDF
+              required: [file]
+      responses:
+        '200':
+          description: Upload accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysesUploadSuccess'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Unauthorized
+        '429':
+          description: Rate limited
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ErrorEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: UPLOAD_VALIDATION_FAILED
+            message:
+              type: string
+              example: File type not allowed
+            details:
+              type: string
+              nullable: true
+          required: [code, message]
+        meta:
+          type: object
+          properties:
+            requestId:
+              type: string
+      required: [success, error]
+    ResumeUploadSuccess:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        isNew:
+          type: boolean
+          nullable: true
+        isDuplicate:
+          type: boolean
+          nullable: true
+        isUpdate:
+          type: boolean
+          nullable: true
+        action:
+          type: string
+          enum: [create, duplicate, update]
+          nullable: true
+        uploadId:
+          type: string
+        imageUrl:
+          type: string
+          format: uri
+        pdfUrl:
+          type: string
+          format: uri
+          nullable: true
+        message:
+          type: string
+        extractedData:
+          type: object
+          nullable: true
+          properties:
+            hasText:
+              type: boolean
+            emailCount:
+              type: integer
+            phoneCount:
+              type: integer
+            primaryEmail:
+              type: string
+              nullable: true
+            primaryPhone:
+              type: string
+              nullable: true
+            contentHash:
+              type: string
+              nullable: true
+      required: [success, uploadId]
+    AnalysesUploadSuccess:
+      allOf:
+        - $ref: '#/components/schemas/ResumeUploadSuccess'
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address
+        password:
+          type: string
+          minLength: 6
+          description: User's password
+      required: [email, password]
+    SignupRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address
+        password:
+          type: string
+          minLength: 6
+          description: User's password
+        firstName:
+          type: string
+          description: User's first name
+        lastName:
+          type: string
+          description: User's last name
+      required: [email, password]
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          description: Success message
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+              description: User's unique identifier
+            email:
+              type: string
+              format: email
+              description: User's email address
+            created_at:
+              type: string
+              format: date-time
+              description: Account creation timestamp
+            email_confirmed_at:
+              type: string
+              format: date-time
+              nullable: true
+              description: Email confirmation timestamp
+          required: [id, email, created_at]
+        session:
+          type: object
+          nullable: true
+          properties:
+            access_token:
+              type: string
+              description: JWT access token for API authentication
+            refresh_token:
+              type: string
+              description: JWT refresh token for token renewal
+            expires_at:
+              type: integer
+              description: Token expiration timestamp
+            token_type:
+              type: string
+              example: bearer
+              description: Token type
+          required: [access_token, refresh_token, expires_at, token_type]
+        requires_confirmation:
+          type: boolean
+          description: Whether email confirmation is required
+      required: [success, user]

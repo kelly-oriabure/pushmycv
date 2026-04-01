@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  # Single unified container running all services
+  unified:
+    build:
+      context: .
+      dockerfile: Dockerfile.unified
+    ports:
+      - "3000:3000"  # Next.js Frontend
+      - "3001:3001"  # Fastify API
+    environment:
+      # Frontend env vars
+      - NODE_ENV=production
+      - NEXT_PUBLIC_FASTIFY_API_URL=http://localhost:3001
+      - NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_KEY}
+      
+      # Fastify API env vars
+      - SUPABASE_URL=${FASTIFY_SUPABASE_URL}
+      - SUPABASE_KEY=${FASTIFY_SUPABASE_KEY}
+      - JOBEAZY_SUPABASE_URL=${SUPABASE_URL}
+      - JOBEAZY_SUPABASE_KEY=${SUPABASE_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - API_KEY=${API_KEY}
+      
+      # Agentic worker env vars
+      - PYTHONPATH=/app/agentic
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - FASTIFY_SUPABASE_URL=${FASTIFY_SUPABASE_URL}
+      - FASTIFY_SUPABASE_KEY=${FASTIFY_SUPABASE_KEY}
+    networks:
+      - pushmycv
+
+networks:
+  pushmycv:
+    driver: bridge

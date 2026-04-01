@@ -1,0 +1,60 @@
+{
+    "scraping_settings": {
+        "base_url": "https://aipure.ai",
+        "delay_between_requests": 2.0,
+        "timeout": 10,
+        "max_retries": 3,
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    },
+    "output_settings": {
+        "excel_filename": "aipure_data.xlsx",
+        "csv_prefix": "aipure",
+        "include_screenshots": false,
+        "include_reviews": true
+    },
+    "data_fields": {
+        "required_fields": [
+            "name",
+            "category",
+            "description",
+            "detail_url"
+        ],
+        "optional_fields": [
+            "full_description",
+            "features",
+            "pricing",
+            "external_url",
+            "rating",
+            "tags",
+            "verified",
+            "trending"
+        ]
+    },
+    "categories": [
+        {
+            "name": "Text & Writing",
+            "url_suffix": "/category/text-writing",
+            "icon": "✏️"
+        },
+        {
+            "name": "Image",
+            "url_suffix": "/category/image",
+            "icon": "🌄"
+        },
+        {
+            "name": "Voice & Language",
+            "url_suffix": "/category/voice-language",
+            "icon": "🔊"
+        },
+        {
+            "name": "Video",
+            "url_suffix": "/category/video",
+            "icon": "🎬"
+        },
+        {
+            "name": "All Category",
+            "url_suffix": "/category/all",
+            "icon": "🚀"
+        }
+    ]
+}
