@@ -1,0 +1,54 @@
+# Deploy to Coolify on push to main
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - '.github/workflows/ci.yml'
+
+# Cancel in-progress deploys for the same branch
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy to Coolify
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Coolify supports two deployment methods:
+
+      # -------------------------------------------
+      # Option A: Git webhook (recommended)
+      # -------------------------------------------
+      # In Coolify UI: Application → Git → Enable auto-deploy
+      # Coolify watches your repo and pulls on every push.
+      # This step just triggers the webhook:
+      - name: Trigger Coolify Deploy (webhook)
+        if: ${{ secrets.COOLIFY_DEPLOY_WEBHOOK_URL != '' }}
+        run: |
+          curl -s -X POST "${{ secrets.COOLIFY_DEPLOY_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}" \
+            --fail-with-body
+
+      # -------------------------------------------
+      # Option B: Coolify API deploy
+      # -------------------------------------------
+      # Set these secrets in GitHub:
+      #   COOLIFY_API_URL    — e.g. https://coolify.yourdomain.com/api/v1
+      #   COOLIFY_API_TOKEN  — API token from Coolify UI
+      #   COOLIFY_APP_ID     — Application ID from Coolify
+      - name: Deploy via Coolify API
+        if: ${{ secrets.COOLIFY_API_TOKEN != '' && secrets.COOLIFY_APP_ID != '' }}
+        run: |
+          curl -s -X POST "${{ secrets.COOLIFY_API_URL }}/applications/${{ secrets.COOLIFY_APP_ID }}/deploy" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}" \
+            --fail-with-body

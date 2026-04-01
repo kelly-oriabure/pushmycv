@@ -1,38 +1,148 @@
+# PushMyCV — Coolify-Ready Docker Compose
+# Deploy: coolify will read this file directly from your Git repo
+# Each service gets its own domain in Coolify UI
+
 version: '3.8'
 
 services:
-  # Single unified container running all services
-  unified:
+  # ============================================
+  # Next.js Frontend (port 3000)
+  # Coolify: set domain to pushmycv.com
+  # ============================================
+  frontend:
     build:
-      context: .
-      dockerfile: Dockerfile.unified
-    ports:
-      - "3000:3000"  # Next.js Frontend
-      - "3001:3001"  # Fastify API
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: pushmycv-frontend
+    restart: unless-stopped
     environment:
-      # Frontend env vars
       - NODE_ENV=production
-      - NEXT_PUBLIC_FASTIFY_API_URL=http://localhost:3001
+      - NEXT_PUBLIC_FASTIFY_API_URL=${NEXT_PUBLIC_FASTIFY_API_URL:-https://api.pushmycv.com}
       - NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL}
       - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_KEY}
-      
-      # Fastify API env vars
+    networks:
+      - pushmycv-internal
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    labels:
+      - "coolify.enabled=true"
+      - "coolify.port=3000"
+      - "coolify.healthCheckPath=/"
+      - "coolify.healthCheckInterval=30"
+
+  # ============================================
+  # Fastify API (port 3001)
+  # Coolify: set domain to api.pushmycv.com
+  # ============================================
+  api:
+    build:
+      context: ./fastify-api
+      dockerfile: Dockerfile
+    container_name: pushmycv-api
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - HOST=0.0.0.0
       - SUPABASE_URL=${FASTIFY_SUPABASE_URL}
       - SUPABASE_KEY=${FASTIFY_SUPABASE_KEY}
       - JOBEAZY_SUPABASE_URL=${SUPABASE_URL}
       - JOBEAZY_SUPABASE_KEY=${SUPABASE_KEY}
       - JWT_SECRET=${JWT_SECRET}
       - API_KEY=${API_KEY}
-      
-      # Agentic worker env vars
-      - PYTHONPATH=/app/agentic
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GOOGLE_GENERATIVE_AI_API_KEY=${GOOGLE_GENERATIVE_AI_API_KEY}
+      - WORKER_POLL_INTERVAL=5000
+      - WORKER_MAX_RETRIES=5
+    networks:
+      - pushmycv-internal
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "coolify.enabled=true"
+      - "coolify.port=3001"
+      - "coolify.healthCheckPath=/health"
+      - "coolify.healthCheckInterval=30"
+
+  # ============================================
+  # Fastify Queue Worker (Node.js, no public port)
+  # Background job processor for embeddings etc.
+  # ============================================
+  fastify-worker:
+    build:
+      context: ./fastify-api
+      dockerfile: Dockerfile
+    container_name: pushmycv-fastify-worker
+    restart: unless-stopped
+    command: node dist/workers/queueWorker.js
+    environment:
+      - NODE_ENV=production
+      - SUPABASE_URL=${FASTIFY_SUPABASE_URL}
+      - SUPABASE_KEY=${FASTIFY_SUPABASE_KEY}
+      - JOBEAZY_SUPABASE_URL=${SUPABASE_URL}
+      - JOBEAZY_SUPABASE_KEY=${SUPABASE_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    networks:
+      - pushmycv-internal
+    depends_on:
+      api:
+        condition: service_healthy
+
+  # ============================================
+  # Python Agentic Worker (no public port)
+  # Processes resume analysis, job fetching from queue
+  # ============================================
+  agentic:
+    build:
+      context: ./agentic
+      dockerfile: Dockerfile
+    container_name: pushmycv-agentic
+    restart: unless-stopped
+    environment:
+      - PYTHONPATH=/app
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - FASTIFY_SUPABASE_URL=${FASTIFY_SUPABASE_URL}
       - FASTIFY_SUPABASE_KEY=${FASTIFY_SUPABASE_KEY}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
     networks:
-      - pushmycv
+      - pushmycv-internal
+    depends_on:
+      api:
+        condition: service_healthy
+
+  # ============================================
+  # Redis (optional, for caching/sessions)
+  # Uncomment if needed
+  # ============================================
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: pushmycv-redis
+  #   restart: unless-stopped
+  #   command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
+  #   volumes:
+  #     - redis-data:/data
+  #   networks:
+  #     - pushmycv-internal
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 30s
+  #     timeout: 3s
+  #     retries: 3
 
 networks:
-  pushmycv:
+  pushmycv-internal:
     driver: bridge
+
+# volumes:
+#   redis-data:
+#     driver: local

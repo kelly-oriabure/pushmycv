@@ -3,7 +3,8 @@ Test script for job board API integration
 """
 import asyncio
 import sys
-sys.path.insert(0, '/Users/kelly.o/Documents/projects/web/agentic-job-automation/agentic')
+import os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from services.job_boards.remoteok_client import RemoteOKClient
 from services.job_boards.arbeitnow_client import ArbeitnowClient

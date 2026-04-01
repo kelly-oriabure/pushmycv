@@ -6,9 +6,9 @@ from datetime import datetime
 from typing import Any, Dict
 
 from dotenv import load_dotenv
-load_dotenv('/Users/kelly.o/Documents/projects/web/agentic-job-automation/agentic/.env')
-
-sys.path.insert(0, '/Users/kelly.o/Documents/projects/web/agentic-job-automation/agentic')
+# Load .env from the agentic directory (or any parent)
+env_path = os.path.join(os.path.dirname(__file__), '..', '.env')
+load_dotenv(os.path.abspath(env_path))
 
 from supabase._async.client import AsyncClient
 from simple_analyzer import SimpleResumeAnalyzer
@@ -69,8 +69,6 @@ async def process_fetch_jobs_api_job(job: Dict[str, Any], fastify_supabase) -> b
     logger.info("Processing fetch_jobs_api job")
     
     try:
-        # Import here to avoid circular imports
-        sys.path.insert(0, '/Users/kelly.o/Documents/projects/web/agentic-job-automation/agentic')
         from jobs.fetch_jobs_api import fetch_jobs_from_boards
         
         result = await fetch_jobs_from_boards(payload)

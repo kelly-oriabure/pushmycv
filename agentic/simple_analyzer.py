@@ -14,9 +14,8 @@ from typing import Dict, List, Any
 
 # Load environment variables
 from dotenv import load_dotenv
-load_dotenv('/Users/kelly.o/Documents/projects/web/agentic-job-automation/agentic/.env')
-
-sys.path.insert(0, '/Users/kelly.o/Documents/projects/web/agentic-job-automation/agentic')
+_env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+load_dotenv(_env_path)
 
 from llm import llm_chat, LLMClient
 
