@@ -1,13 +1,12 @@
 # PushMyCV — Coolify-Ready Docker Compose
 # Deploy: coolify will read this file directly from your Git repo
-# Each service gets its own domain in Coolify UI
+# Each service gets its own domain via Coolify labels below
 
 version: '3.8'
 
 services:
   # ============================================
-  # Next.js Frontend (port 3000)
-  # Coolify: set domain to pushmycv.com
+  # Next.js Frontend → pushmycv.com
   # ============================================
   frontend:
     build:
@@ -15,6 +14,8 @@ services:
       dockerfile: Dockerfile
     container_name: pushmycv-frontend
     restart: unless-stopped
+    ports:
+      - "3000:3000"
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_FASTIFY_API_URL=${NEXT_PUBLIC_FASTIFY_API_URL:-https://api.pushmycv.com}
@@ -30,13 +31,21 @@ services:
       start_period: 60s
     labels:
       - "coolify.enabled=true"
+      - "coolify.type=application"
+      - "coolify.name=pushmycv-frontend"
       - "coolify.port=3000"
+      - "coolify.fqdn=https://pushmycv.com"
       - "coolify.healthCheckPath=/"
       - "coolify.healthCheckInterval=30"
+      # Traefik labels for Coolify proxy
+      - "traefik.enable=true"
+      - "traefik.http.routers.pushmycv-frontend.rule=Host(`pushmycv.com`)"
+      - "traefik.http.routers.pushmycv-frontend.entrypoints=https"
+      - "traefik.http.routers.pushmycv-frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.pushmycv-frontend.loadbalancer.server.port=3000"
 
   # ============================================
-  # Fastify API (port 3001)
-  # Coolify: set domain to api.pushmycv.com
+  # Fastify API → api.pushmycv.com
   # ============================================
   api:
     build:
@@ -44,6 +53,8 @@ services:
       dockerfile: Dockerfile
     container_name: pushmycv-api
     restart: unless-stopped
+    ports:
+      - "3001:3001"
     environment:
       - NODE_ENV=production
       - PORT=3001
@@ -68,13 +79,21 @@ services:
       start_period: 40s
     labels:
       - "coolify.enabled=true"
+      - "coolify.type=application"
+      - "coolify.name=pushmycv-api"
       - "coolify.port=3001"
+      - "coolify.fqdn=https://api.pushmycv.com"
       - "coolify.healthCheckPath=/health"
       - "coolify.healthCheckInterval=30"
+      # Traefik labels for Coolify proxy
+      - "traefik.enable=true"
+      - "traefik.http.routers.pushmycv-api.rule=Host(`api.pushmycv.com`)"
+      - "traefik.http.routers.pushmycv-api.entrypoints=https"
+      - "traefik.http.routers.pushmycv-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.pushmycv-api.loadbalancer.server.port=3001"
 
   # ============================================
-  # Fastify Queue Worker (Node.js, no public port)
-  # Background job processor for embeddings etc.
+  # Fastify Queue Worker (internal only — no public port)
   # ============================================
   fastify-worker:
     build:
@@ -95,10 +114,14 @@ services:
     depends_on:
       api:
         condition: service_healthy
+    labels:
+      - "coolify.enabled=true"
+      - "coolify.type=application"
+      - "coolify.name=pushmycv-fastify-worker"
+      - "coolify.ignore=true"
 
   # ============================================
-  # Python Agentic Worker (no public port)
-  # Processes resume analysis, job fetching from queue
+  # Python Agentic Worker (internal only — no public port)
   # ============================================
   agentic:
     build:
@@ -119,6 +142,11 @@ services:
     depends_on:
       api:
         condition: service_healthy
+    labels:
+      - "coolify.enabled=true"
+      - "coolify.type=application"
+      - "coolify.name=pushmycv-agentic"
+      - "coolify.ignore=true"
 
   # ============================================
   # Redis (optional, for caching/sessions)
@@ -129,6 +157,8 @@ services:
   #   container_name: pushmycv-redis
   #   restart: unless-stopped
   #   command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
+  #   ports:
+  #     - "6379:6379"
   #   volumes:
   #     - redis-data:/data
   #   networks:
